@@ -6,6 +6,7 @@ package gitlab
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -401,6 +402,10 @@ func (s *pullService) convertPullRequest(ctx context.Context, from *pr) (*scm.Pu
 	if err != nil {
 		return nil, res, err
 	}
+	fmt.Println("[go-scm] convertPullRequest")
+	from_json, _ := json.Marshal(from)
+	fmt.Println(string(from_json))
+	fmt.Printf("[go-scm] Base SHA: %s,HeadSHA: %s,SHA: %s", from.DiffRefs.BaseSHA, from.DiffRefs.HeadSHA, from.Sha)
 	return &scm.PullRequest{
 		Number:         from.Number,
 		Title:          from.Title,
