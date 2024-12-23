@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"strconv"
 	"time"
@@ -28,6 +29,8 @@ func (s *pullService) Find(ctx context.Context, repo string, number int) (*scm.P
 	if err != nil {
 		return nil, res, err
 	}
+	tmp_body, _ := io.ReadAll(res.Body)
+	fmt.Println(string(tmp_body))
 	convRepo, convRes, err := s.convertPullRequest(ctx, out)
 	if err != nil {
 		return nil, convRes, err
