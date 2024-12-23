@@ -317,8 +317,9 @@ type pr struct {
 	Updated         time.Time `json:"updated_at"`
 	Closed          time.Time
 	DiffRefs        struct {
-		BaseSHA string `json:"base_sha"`
-		HeadSHA string `json:"head_sha"`
+		BaseSHA  string `json:"base_sha"`
+		HeadSHA  string `json:"head_sha"`
+		StartSHA string `json:"start_sha"`
 	} `json:"diff_refs"`
 	Assignee  *user   `json:"assignee"`
 	Assignees []*user `json:"assignees"`
