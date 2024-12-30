@@ -6,9 +6,7 @@ package gitlab
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
 	"strconv"
 	"time"
@@ -29,9 +27,6 @@ func (s *pullService) Find(ctx context.Context, repo string, number int) (*scm.P
 	if err != nil {
 		return nil, res, err
 	}
-	fmt.Println("[go-scm] Find")
-	tmp_body, _ := io.ReadAll(res.Body)
-	fmt.Println(string(tmp_body))
 	convRepo, convRes, err := s.convertPullRequest(ctx, out)
 	if err != nil {
 		return nil, convRes, err
@@ -43,7 +38,6 @@ func (s *pullService) FindComment(ctx context.Context, repo string, index, id in
 	path := fmt.Sprintf("api/v4/projects/%s/merge_requests/%d/notes/%d", encode(repo), index, id)
 	out := new(issueComment)
 	res, err := s.client.do(ctx, "GET", path, nil, out)
-	fmt.Println("[go-scm] FindComment")
 	return convertIssueComment(out), res, err
 }
 
@@ -51,7 +45,6 @@ func (s *pullService) List(ctx context.Context, repo string, opts *scm.PullReque
 	path := fmt.Sprintf("api/v4/projects/%s/merge_requests?%s", encode(repo), encodePullRequestListOptions(opts))
 	out := []*pr{}
 	res, err := s.client.do(ctx, "GET", path, nil, &out)
-	fmt.Println("[go-scm] List")
 	if err != nil {
 		return nil, res, err
 	}
@@ -66,7 +59,6 @@ func (s *pullService) ListChanges(ctx context.Context, repo string, number int, 
 	path := fmt.Sprintf("api/v4/projects/%s/merge_requests/%d/changes?%s", encode(repo), number, encodeListOptions(opts))
 	out := new(changes)
 	res, err := s.client.do(ctx, "GET", path, nil, &out)
-	fmt.Println("[go-scm] ListChanges")
 	return convertChangeList(out.Changes), res, err
 }
 
@@ -78,7 +70,6 @@ func (s *pullService) ListComments(ctx context.Context, repo string, index int, 
 	path := fmt.Sprintf("api/v4/projects/%s/merge_requests/%d/notes?%s", encode(repo), index, encodeListOptions(opts))
 	out := []*issueComment{}
 	res, err := s.client.do(ctx, "GET", path, nil, &out)
-	fmt.Println("[go-scm] ListComments")
 	return convertIssueCommentList(out), res, err
 }
 
@@ -95,7 +86,6 @@ func (s *pullService) ListEvents(ctx context.Context, repo string, index int, op
 	path := fmt.Sprintf("api/v4/projects/%s/merge_requests/%d/resource_label_events?%s", encode(repo), index, encodeListOptions(opts))
 	out := []*labelEvent{}
 	res, err := s.client.do(ctx, "GET", path, nil, &out)
-	fmt.Println("[go-scm] ListEvents")
 	return convertLabelEvents(out), res, err
 }
 
@@ -141,7 +131,6 @@ func (s *pullService) EditComment(ctx context.Context, repo string, number, id i
 func (s *pullService) Merge(ctx context.Context, repo string, number int, options *scm.PullRequestMergeOptions) (*scm.Response, error) {
 	path := fmt.Sprintf("api/v4/projects/%s/merge_requests/%d/merge", encode(repo), number)
 	res, err := s.client.do(ctx, "PUT", path, encodePullRequestMergeOptions(options), nil)
-	fmt.Println("[go-scm] Merge")
 	return res, err
 }
 
@@ -236,7 +225,6 @@ func (s *pullService) Create(ctx context.Context, repo string, input *scm.PullRe
 
 	out := new(pr)
 	res, err := s.client.do(ctx, "POST", path, in, out)
-	fmt.Println("[go-scm] Create")
 	if err != nil {
 		return nil, res, err
 	}
@@ -328,9 +316,8 @@ type pr struct {
 	Updated         time.Time `json:"updated_at"`
 	Closed          time.Time
 	DiffRefs        struct {
-		BaseSHA  string `json:"base_sha"`
-		HeadSHA  string `json:"head_sha"`
-		StartSHA string `json:"start_sha"`
+		BaseSHA string `json:"base_sha"`
+		HeadSHA string `json:"head_sha"`
 	} `json:"diff_refs"`
 	Assignee  *user   `json:"assignee"`
 	Assignees []*user `json:"assignees"`
@@ -367,17 +354,12 @@ type pullRequestMergeRequest struct {
 
 func (s *pullService) convertPullRequestList(ctx context.Context, repo string, from []*pr) ([]*scm.PullRequest, *scm.Response, error) {
 	to := []*scm.PullRequest{}
-	fmt.Println("[go-scm] convertPullRequestList")
 	for _, v := range from {
-		// converted, res, err := s.convertPullRequest(ctx, v)
-		// if err != nil {
-		// 	return nil, res, err
-		// }
-		find_prs, find_res, find_err := s.Find(ctx, repo, v.Number)
-		if find_err != nil {
-			return nil, find_res, find_err
+		converted, res, err := s.Find(ctx, repo, v.Number)
+		if err != nil {
+			return nil, res, err
 		}
-		to = append(to, find_prs)
+		to = append(to, converted)
 	}
 	return to, nil, nil
 }
@@ -419,10 +401,6 @@ func (s *pullService) convertPullRequest(ctx context.Context, from *pr) (*scm.Pu
 	if err != nil {
 		return nil, res, err
 	}
-	fmt.Println("[go-scm] convertPullRequest")
-	from_json, _ := json.Marshal(from)
-	fmt.Println(string(from_json))
-	fmt.Printf("[go-scm] Base SHA: %s,HeadSHA: %s,SHA: %s", from.DiffRefs.BaseSHA, from.DiffRefs.HeadSHA, from.Sha)
 	return &scm.PullRequest{
 		Number:         from.Number,
 		Title:          from.Title,
