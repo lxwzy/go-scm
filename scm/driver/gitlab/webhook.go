@@ -274,7 +274,7 @@ func convertPullRequestHook(src *pullRequestHook) *scm.PullRequestHook {
 		Sha:    sha,
 		Ref:    ref,
 		Base: scm.PullRequestBranch{
-			Ref: repo.Branch,
+			Ref: src.ObjectAttributes.TargetBranch,
 		},
 		Head: scm.PullRequestBranch{
 			Sha: sha,
